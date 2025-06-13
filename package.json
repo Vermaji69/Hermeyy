@@ -1,0 +1,25 @@
+{
+  "name": "discord-music-bot",
+  "version": "1.0.0",
+  "description": "High-quality Discord music bot with YouTube streaming",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo \"No build process needed for Discord bot\" && exit 0",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@discordjs/voice": "^0.16.1",
+    "ytdl-core": "^4.11.5",
+    "ytsr": "^3.8.4",
+    "libsodium-wrappers": "^0.7.11",
+    "sodium-native": "^4.0.4",
+    "ffmpeg-static": "^5.2.0",
+    "opusscript": "^0.0.8"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
