@@ -5,30 +5,33 @@ module.exports = {
         .setName('pause')
         .setDescription('Pause the current song'),
 
-    async execute(interaction, musicPlayer) {
+    async execute(interaction, manager) {
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) {
             return interaction.reply({ content: '❌ You need to be in a voice channel to use this command!', ephemeral: true });
         }
 
-        if (!musicPlayer.isPlaying) {
+        const player = manager.get(interaction.guildId);
+        if (!player) {
             return interaction.reply({ content: '❌ Nothing is currently playing!', ephemeral: true });
         }
 
-        if (musicPlayer.isPaused) {
+        if (!player.playing) {
+            return interaction.reply({ content: '❌ Nothing is currently playing!', ephemeral: true });
+        }
+
+        if (player.paused) {
             return interaction.reply({ content: '❌ The music is already paused!', ephemeral: true });
         }
 
-        const paused = musicPlayer.pause();
-        if (paused) {
-            const embed = new EmbedBuilder()
-                .setColor('#FFA500')
-                .setTitle('⏸️ Music Paused')
-                .setDescription('Use `/resume` to continue playing.');
-            
-            await interaction.reply({ embeds: [embed] });
-        } else {
-            await interaction.reply({ content: '❌ Failed to pause the music!', ephemeral: true });
-        }
+        player.pause(true);
+
+        const embed = new EmbedBuilder()
+            .setColor('#FFA500')
+            .setTitle('⏸️ Music Paused')
+            .setDescription('Use `/resume` to continue playing.')
+            .setTimestamp();
+        
+        await interaction.reply({ embeds: [embed] });
     }
 };

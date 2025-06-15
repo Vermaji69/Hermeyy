@@ -1,6 +1,5 @@
 const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } = require('@discordjs/voice');
-const MusicPlayer = require('./src/MusicPlayer');
+const LavalinkManager = require('./src/LavalinkManager');
 const config = require('./config.json');
 const commands = require('./src/commands');
 
@@ -14,7 +13,7 @@ class MusicBot {
             ]
         });
 
-        this.musicPlayers = new Collection();
+        this.lavalinkManager = new LavalinkManager(this.client);
         this.setupEventHandlers();
         this.registerCommands();
     }
@@ -22,7 +21,12 @@ class MusicBot {
     setupEventHandlers() {
         this.client.once('ready', () => {
             console.log(`🎵 ${this.client.user.tag} is now online and ready to play music!`);
-            this.client.user.setActivity('🎵 High Quality Music', { type: 'LISTENING' });
+            this.client.user.setActivity('🎵 High Quality Music with Lavalink', { type: 'LISTENING' });
+            this.lavalinkManager.init();
+        });
+
+        this.client.on('raw', (d) => {
+            this.lavalinkManager.manager.updateVoiceState(d);
         });
 
         this.client.on('interactionCreate', async (interaction) => {
@@ -32,7 +36,7 @@ class MusicBot {
             if (!command) return;
 
             try {
-                await command.execute(interaction, this.getMusicPlayer(interaction.guildId));
+                await command.execute(interaction, this.lavalinkManager.manager);
             } catch (error) {
                 console.error('Command execution error:', error);
                 const errorMessage = 'There was an error executing this command!';
@@ -44,35 +48,6 @@ class MusicBot {
                 }
             }
         });
-
-        this.client.on('voiceStateUpdate', (oldState, newState) => {
-            const musicPlayer = this.musicPlayers.get(oldState.guild.id);
-            if (!musicPlayer) return;
-
-            // Check if the bot was disconnected
-            if (oldState.member?.user.bot && oldState.channelId && !newState.channelId) {
-                musicPlayer.cleanup();
-                this.musicPlayers.delete(oldState.guild.id);
-            }
-
-            // Auto-disconnect if no one else is in the voice channel
-            if (oldState.channelId && oldState.channel?.members.filter(member => !member.user.bot).size === 0) {
-                setTimeout(() => {
-                    const channel = oldState.channel;
-                    if (channel && channel.members.filter(member => !member.user.bot).size === 0) {
-                        musicPlayer.cleanup();
-                        this.musicPlayers.delete(oldState.guild.id);
-                    }
-                }, 30000); // Wait 30 seconds before disconnecting
-            }
-        });
-    }
-
-    getMusicPlayer(guildId) {
-        if (!this.musicPlayers.has(guildId)) {
-            this.musicPlayers.set(guildId, new MusicPlayer());
-        }
-        return this.musicPlayers.get(guildId);
     }
 
     async registerCommands() {

@@ -5,22 +5,28 @@ module.exports = {
         .setName('shuffle')
         .setDescription('Shuffle the current queue'),
 
-    async execute(interaction, musicPlayer) {
+    async execute(interaction, manager) {
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) {
             return interaction.reply({ content: '❌ You need to be in a voice channel to use this command!', ephemeral: true });
         }
 
-        if (musicPlayer.queue.length < 2) {
+        const player = manager.get(interaction.guildId);
+        if (!player) {
+            return interaction.reply({ content: '❌ No player found!', ephemeral: true });
+        }
+
+        if (player.queue.size < 2) {
             return interaction.reply({ content: '❌ Need at least 2 songs in the queue to shuffle!', ephemeral: true });
         }
 
-        musicPlayer.shuffle();
+        player.queue.shuffle();
         
         const embed = new EmbedBuilder()
             .setColor('#9932CC')
             .setTitle('🔀 Queue Shuffled')
-            .setDescription(`Shuffled **${musicPlayer.queue.length}** songs in the queue.`);
+            .setDescription(`Shuffled **${player.queue.size}** songs in the queue.`)
+            .setTimestamp();
         
         await interaction.reply({ embeds: [embed] });
     }

@@ -5,22 +5,25 @@ module.exports = {
         .setName('stop')
         .setDescription('Stop the music and clear the queue'),
 
-    async execute(interaction, musicPlayer) {
+    async execute(interaction, manager) {
         const voiceChannel = interaction.member.voice.channel;
         if (!voiceChannel) {
             return interaction.reply({ content: '❌ You need to be in a voice channel to use this command!', ephemeral: true });
         }
 
-        if (!musicPlayer.isPlaying && musicPlayer.queue.length === 0) {
+        const player = manager.get(interaction.guildId);
+        if (!player) {
             return interaction.reply({ content: '❌ Nothing is currently playing!', ephemeral: true });
         }
 
-        musicPlayer.stop();
-        
+        player.queue.clear();
+        player.stop();
+
         const embed = new EmbedBuilder()
             .setColor('#FF0000')
             .setTitle('⏹️ Music Stopped')
-            .setDescription('Queue cleared and playback stopped.');
+            .setDescription('Queue cleared and playback stopped.')
+            .setTimestamp();
         
         await interaction.reply({ embeds: [embed] });
     }
